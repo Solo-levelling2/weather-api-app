@@ -66,15 +66,21 @@ sequenceDiagram
 
 ## Traceability & verification
 
-| Req ID | Implementation (in `index.html`) | Test case | Expected result | Result |
-|---|---|---|---|---|
-| REQ-01 | Search input field + button | Enter "Bangalore", click Search | Input accepted | ☐ Pass / ☐ Fail |
-| REQ-02 | Geocoding fetch function | Search "Bangalore" | Coordinates retrieved (~12.97, 77.59) | ☐ Pass / ☐ Fail |
-| REQ-03 | Forecast fetch + display function | Search "Bangalore" | Temperature & wind shown | ☐ Pass / ☐ Fail |
-| REQ-04 | "No results" handling | Search "Xyzabc123" | "City not found" message | ☐ Pass / ☐ Fail |
-| REQ-05 | try/catch error handling | Turn Wi-Fi off, search | Error message shown, no crash | ☐ Pass / ☐ Fail |
-| REQ-06 | No keys in code | Review source code | No keys/tokens present | ☐ Pass / ☐ Fail |
-| REQ-07 | Responsive CSS | Open on phone / narrow window | Layout readable, no overflow | ☐ Pass / ☐ Fail |
+Each requirement is verified in two ways: a **code review** (static, against the source) and a **live test** (dynamic, on the deployed app).
+
+| Req ID | Implementation (in `index.html`) | Test case | Expected result | Code review | Live test |
+|---|---|---|---|---|---|
+| REQ-01 | `#cityInput` field, `#searchBtn` button, Enter-key listener; empty input rejected with a message | Enter "Bangalore", press Search and also press Enter; then search with an empty box | Search runs both ways; empty input shows "Please enter a valid city name." | ✅ | ☐ Pass / ☐ Fail |
+| REQ-02 | `getWeather()` → fetch to Geocoding API (`count=1`) | Search "Bangalore" | Coordinates retrieved (~12.97, 77.59) and passed to the forecast call | ✅ | ☐ Pass / ☐ Fail |
+| REQ-03 | `getWeather()` → fetch to Forecast API (`current=temperature_2m,wind_speed_10m`); values written to `#tempDisplay` and `#windDisplay` | Search "Bangalore" | City name, temperature (°C) and wind speed (km/h) shown | ✅ | ☐ Pass / ☐ Fail |
+| REQ-04 | Check for empty `geoData.results` → message in `#messageArea` | Search "Xyzabc123" | "City not found" message, no weather card | ✅ | ☐ Pass / ☐ Fail |
+| REQ-05 | `try/catch` around both fetches; `response.ok` checks | Turn Wi-Fi off, then search | Connection error message shown, page keeps working | ✅ | ☐ Pass / ☐ Fail |
+| REQ-06 | No keys, tokens or storage in source | Search source for `key`, `token`, `github_pat_`, `localStorage` | Nothing found | ✅ | ☐ Pass / ☐ Fail |
+| REQ-07 | `@media (max-width: 480px)` rules; `box-sizing: border-box` | Open on a phone, or narrow the browser window | Input and button stack vertically; no sideways scrolling | ✅ | ☐ Pass / ☐ Fail |
+
+### Known limitations
+- **Ambiguous city names:** the geocoding call uses `count=1`, so "Paris" returns Paris, France, not Paris, Texas. A future requirement could let the user choose between matches.
+- **Single error message:** every failure (network down, API error, missing data) shows the same "Unable to connect" message. The console log keeps the specific cause for debugging.
 
 ---
 
@@ -108,6 +114,8 @@ Or use the live demo link above.
 
 ## Next improvements
 
+- [ ] Show a loading indicator and disable the Search button while a request is running
+- [ ] Let the user choose between cities with the same name
 - [ ] Add a 5-day forecast view
 - [ ] Remember the last searched city
 - [ ] Show weather icons based on conditions

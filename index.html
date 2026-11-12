@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Open-Meteo Weather App</title>
     <style>
+        /* REQ-07: Consistent sizing so padding never pushes elements off-screen */
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
@@ -33,6 +37,7 @@
         /* REQ-01: Input styling */
         input[type="text"] {
             flex: 1;
+            min-width: 0;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -62,6 +67,22 @@
             margin-top: 15px;
             font-weight: bold;
         }
+
+        /* REQ-07: Mobile layout for narrow screens (phones) */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .input-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -87,8 +108,11 @@
 </div>
 
 <script>
+    // REQ-06: No API keys, tokens, or personal data are used or stored anywhere in this file.
+
     document.getElementById('searchBtn').addEventListener('click', getWeather);
-    document.getElementById('cityInput').addEventListener('keypress', function (e) {
+    // REQ-01: Allow pressing Enter to search (keydown replaces the deprecated keypress event)
+    document.getElementById('cityInput').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             getWeather();
         }
@@ -112,7 +136,7 @@
             // REQ-02: Convert city name to coordinates using Open-Meteo Geocoding API
             // REQ-05: Handle network failures safely without crashing
             const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityInput)}&count=1&language=en&format=json`);
-            
+
             if (!geoResponse.ok) {
                 throw new Error('Network response was not ok during geocoding.');
             }
@@ -130,7 +154,7 @@
 
             // REQ-03: Fetch forecast data using coordinates
             const forecastResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m`);
-            
+
             if (!forecastResponse.ok) {
                 throw new Error('Network response was not ok during forecast retrieval.');
             }
@@ -139,7 +163,8 @@
 
             // REQ-03: Display the current temperature and wind speed
             if (forecastData.current) {
-                document.getElementById('cityNameDisplay').textContent = `${name}, ${country || ''}`;
+                // Show "City, Country", or just "City" when no country is returned (avoids a trailing comma)
+                document.getElementById('cityNameDisplay').textContent = country ? `${name}, ${country}` : name;
                 document.getElementById('tempDisplay').textContent = forecastData.current.temperature_2m;
                 document.getElementById('windDisplay').textContent = forecastData.current.wind_speed_10m;
                 weatherResult.style.display = 'block';
