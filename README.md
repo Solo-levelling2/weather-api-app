@@ -2,7 +2,7 @@
 
 A browser-based weather app that looks up any city and shows its current weather, built with **spec-driven development**: I wrote the requirements, AI generated the code, and I verified every requirement with traceable tests.
 
-**🔗 Live demo:** https://YOUR-USERNAME.github.io/weather-api-app/
+**🔗 Live demo:** https://Solo-levelling2.github.io/weather-api-app/
 
 ---
 
