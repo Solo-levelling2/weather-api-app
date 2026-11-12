@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open-Meteo Weather App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 50px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        /* REQ-01: Input styling */
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .weather-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            display: none;
+        }
+        .error-message {
+            color: #d9534f;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Weather Finder</h2>
+
+    <!-- REQ-01: The system shall accept a city name as input. -->
+    <div class="input-group">
+        <input type="text" id="cityInput" placeholder="Enter city name..." />
+        <button id="searchBtn">Search</button>
+    </div>
+
+    <!-- REQ-04 & REQ-05: Message and status output areas -->
+    <div id="messageArea" class="error-message"></div>
+
+    <!-- REQ-03: Display area for temperature and wind speed -->
+    <div id="weatherResult" class="weather-result">
+        <h3 id="cityNameDisplay"></h3>
+        <p><strong>Temperature:</strong> <span id="tempDisplay"></span> °C</p>
+        <p><strong>Wind Speed:</strong> <span id="windDisplay"></span> km/h</p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('searchBtn').addEventListener('click', getWeather);
+    document.getElementById('cityInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            getWeather();
+        }
+    });
+
+    async function getWeather() {
+        // REQ-01: Accept city name as input
+        const cityInput = document.getElementById('cityInput').value.trim();
+        const messageArea = document.getElementById('messageArea');
+        const weatherResult = document.getElementById('weatherResult');
+
+        messageArea.textContent = '';
+        weatherResult.style.display = 'none';
+
+        if (!cityInput) {
+            messageArea.textContent = 'Please enter a valid city name.';
+            return;
+        }
+
+        try {
+            // REQ-02: Convert city name to coordinates using Open-Meteo Geocoding API
+            // REQ-05: Handle network failures safely without crashing
+            const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityInput)}&count=1&language=en&format=json`);
+            
+            if (!geoResponse.ok) {
+                throw new Error('Network response was not ok during geocoding.');
+            }
+
+            const geoData = await geoResponse.json();
+
+            // REQ-04: Show a clear message if the city is not found
+            if (!geoData.results || geoData.results.length === 0) {
+                messageArea.textContent = `City "${cityInput}" not found. Please check your spelling and try again.`;
+                return;
+            }
+
+            const location = geoData.results[0];
+            const { latitude, longitude, name, country } = location;
+
+            // REQ-03: Fetch forecast data using coordinates
+            const forecastResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m`);
+            
+            if (!forecastResponse.ok) {
+                throw new Error('Network response was not ok during forecast retrieval.');
+            }
+
+            const forecastData = await forecastResponse.json();
+
+            // REQ-03: Display the current temperature and wind speed
+            if (forecastData.current) {
+                document.getElementById('cityNameDisplay').textContent = `${name}, ${country || ''}`;
+                document.getElementById('tempDisplay').textContent = forecastData.current.temperature_2m;
+                document.getElementById('windDisplay').textContent = forecastData.current.wind_speed_10m;
+                weatherResult.style.display = 'block';
+            } else {
+                throw new Error('Weather data unavailable.');
+            }
+
+        } catch (error) {
+            // REQ-05: The system shall not crash if the network is unavailable.
+            console.error('An error occurred:', error);
+            messageArea.textContent = 'Unable to connect to the weather service. Please check your internet connection and try again.';
+        }
+    }
+</script>
+
+</body>
+</html>
